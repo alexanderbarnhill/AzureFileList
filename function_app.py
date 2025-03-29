@@ -21,9 +21,13 @@ def get_files(storage_account, container, folder):
 
     for item in items:
         if item.name.lower().endswith(("jpg", "jpeg")):
-            child_items.append({"path": f"https://{storage_account}.blob.core.windows.net/{container}/{item.name}"})
+            child_items.append({
+                "path": f"https://{storage_account}.blob.core.windows.net/{container}/{item.name}",
+                "name": item.name,
+                "container": container
+            })
 
-    return func.HttpResponse(str(child_items), mimetype="application/json")
+    return child_items
 
 @app.route(route="get_files", methods=["GET"])
 def get_files_function(req: func.HttpRequest) -> func.HttpResponse:
@@ -45,7 +49,7 @@ def get_files_function(req: func.HttpRequest) -> func.HttpResponse:
         files = get_files(storage_account, container, folder)
 
         return func.HttpResponse(
-            json.dumps({"files": files}),
+            json.dumps({"childItems": files}),
             status_code=200,
             mimetype="application/json"
         )
