@@ -4,7 +4,14 @@
 
 ## Use in Azure Data Factory
 
-**Function Name**: `@concat('get_files?', '&storage_account=', pipeline().parameters.storage_account, '&container=', pipeline().parameters.container, '&folder=', pipeline().parameters.folder)`
+**Function Name**: 
+```
+@concat('get_files?',
+'&con_env_in=', pipeline().parameters.con_env_in,
+'&container=', pipeline().parameters.container,
+'&folder=', pipeline().parameters.folder
+)
+```
 
 **Function Key**: 
 - Authentication: Anonymous
