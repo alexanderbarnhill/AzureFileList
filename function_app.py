@@ -5,12 +5,13 @@ from azure.storage.blob import BlobServiceClient
 
 app = func.FunctionApp(http_auth_level=func.AuthLevel.FUNCTION)
 
-def get_files(storage_account, container, folder):
+
+def get_files(container, folder, connection_string_input_env_var):
     # Retrieve the connection string from environment variables
-    connection_string = os.getenv("AZURE_STORAGE_CONNECTION_STRING")
+    connection_string = os.getenv(connection_string_input_env_var)
 
     if not connection_string:
-        raise ValueError("AZURE_STORAGE_CONNECTION_STRING is not set")
+        raise ValueError(f"{connection_string_input_env_var} is not set")
 
     # Create a BlobServiceClient using the connection string
     service_client = BlobServiceClient.from_connection_string(connection_string)
@@ -22,7 +23,6 @@ def get_files(storage_account, container, folder):
     for item in items:
         if item.name.lower().endswith(("jpg", "jpeg")):
             child_items.append({
-                "path": f"https://{storage_account}.blob.core.windows.net/{container}/{item.name}",
                 "name": item.name,
                 "container": container
             })
@@ -32,21 +32,22 @@ def get_files(storage_account, container, folder):
 @app.route(route="get_files", methods=["GET"])
 def get_files_function(req: func.HttpRequest) -> func.HttpResponse:
     try:
+        print("Params:", req.params)
         # Get query parameters
-        storage_account = req.params.get("storage_account")
         container = req.params.get("container")
         folder = req.params.get("folder")
+        connection_string_input_env_var = req.params.get("con_env_in")
 
         # Validate query parameters
-        if not storage_account or not container or not folder:
+        if not container or not folder or not connection_string_input_env_var:
             return func.HttpResponse(
-                json.dumps({"error": "Missing required query parameters. Expected: storage_account, container, folder."}),
+                json.dumps({"error": "Missing required query parameters. Expected: container, folder, conv_env_in."}),
                 status_code=400,
                 mimetype="application/json"
             )
 
         # Fetch file paths
-        files = get_files(storage_account, container, folder)
+        files = get_files(container, folder, connection_string_input_env_var)
 
         return func.HttpResponse(
             json.dumps({"childItems": files}),
