@@ -2,6 +2,7 @@ import os
 import json
 import azure.functions as func
 from azure.storage.blob import BlobServiceClient
+import urllib.parse
 
 # Create a Function App with HTTP trigger and function-level authorization
 app = func.FunctionApp(http_auth_level=func.AuthLevel.FUNCTION)
@@ -34,14 +35,16 @@ def get_files(container, folder, connection_string_input_env_var):
     child_items = []
 
     # List all blobs with a prefix matching the specified folder
+    if folder is None or len(folder) == 0 or folder == "ROOT":
+        print(f"Looking in root directory: {container}")
+        folder = None
     items = container_client.list_blobs(name_starts_with=folder)
-
     # Loop through all items and filter for JPEG/JPG files
     for item in items:
-        if item.name.lower().endswith(("jpg", "jpeg")):
+        if item.name.lower().endswith(("jpg", "jpeg")) and not os.path.basename(item.name.lower()).startswith("."):
             # Add file information to the list
             child_items.append({
-                "name": item.name,
+                "name": urllib.parse.quote(item.name),
                 "container": container
             })
 
